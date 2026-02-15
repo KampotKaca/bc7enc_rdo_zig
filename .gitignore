@@ -1,0 +1,8 @@
+.zig-cache
+zig-out
+*.o
+bc7e_ispc.h
+bc7e_ispc_avx.h
+bc7e_ispc_avx2.h
+bc7e_ispc_sse2.h
+bc7e_ispc_sse4.h
