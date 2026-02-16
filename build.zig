@@ -34,19 +34,19 @@ pub fn build(b: *std.Build) void {
     // });
 
     // module.addCMacro("SUPPORT_BC7E", "1");
-    module.addIncludePath(b.path(""));
+    module.addIncludePath(b.path("root"));
     module.addCSourceFiles(.{
         .files = &.{
-            "bc7enc_c.cpp",
-            "bc7enc.cpp",
-            "bc7decomp.cpp",
-            "bc7decomp_ref.cpp",
-            "lodepng.cpp",
-            // "test.cpp",
-            "rgbcx.cpp",
-            "utils.cpp",
-            "ert.cpp",
-            "rdo_bc_encoder.cpp",
+            "root/bc7enc_c.cpp",
+            "root/bc7enc.cpp",
+            "root/bc7decomp.cpp",
+            "root/bc7decomp_ref.cpp",
+            "root/lodepng.cpp",
+            // "root/test.cpp",
+            "root/rgbcx.cpp",
+            "root/utils.cpp",
+            "root/ert.cpp",
+            "root/rdo_bc_encoder.cpp",
         },
         .language = .cpp,
         .flags = &.{"-std=c++20"},
