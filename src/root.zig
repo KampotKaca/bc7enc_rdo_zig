@@ -1,11 +1,9 @@
 const std = @import("std");
 
 const c = @cImport({
-    @cInclude("bc7enc_c.h");
+    @cInclude("rdo_bc.h");
 });
 
-pub const init = c.bc7enc_compress_block_init_c;
-pub const compressBlock = c.bc7enc_compress_block_c;
-pub const compressBlockParamsInit = c.bc7enc_compress_block_params_init_c;
-pub const compressBlockParamsInitLinearWeights = c.bc7enc_compress_block_params_init_linear_weights_c;
-pub const compressBlockParamsInitPerceptualWeights = c.bc7enc_compress_block_params_init_perceptual_weights_c;
+pub const init = c.bc_rdo_init;
+pub const encode = c.bc_rdo_encode;
+pub const is_ok = c.is_ok;
