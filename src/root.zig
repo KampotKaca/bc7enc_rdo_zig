@@ -8,6 +8,7 @@ const c = @cImport({
 pub const initbc7enc = c.init_bc7enc;
 pub const initEncoder = c.bc_rdo_init;
 pub const deinitEncoder = c.bc_rdo_deinit;
+pub const getDefaultOptions = c.bc_rdo_get_default_options;
 pub const is_ok = c.is_ok;
 
 pub fn encode(encoder: c.bc_rdo_encoder, force_dx10dds: bool, writer: *std.Io.Writer) bool {
