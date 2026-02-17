@@ -155,6 +155,7 @@ extern "C" {
 
     typedef struct {
         void* encoder;
+        bool perceptual;
     }bc_rdo_encoder;
 
     typedef struct {
@@ -207,10 +208,12 @@ extern "C" {
         uint8_t* image;
     }bc_rdo_init_info;
 
+    typedef bool (*WriteFn)(void* user, const void* data, uint64_t size);
+
     void init_bc7enc();
     bc_rdo_encoder bc_rdo_init(const bc_rdo_init_info* info, const bc_rdo_init_options* options);
     void bc_rdo_deinit(bc_rdo_encoder encoder);
-    bool bc_rdo_encode(bc_rdo_encoder encoder);
+    bool bc_rdo_encode(bc_rdo_encoder encoder, bool force_dx10dds, void* user, WriteFn writeFn);
 
     inline bool is_ok(bc_rdo_encoder encoder) {
         return encoder.encoder != 0;

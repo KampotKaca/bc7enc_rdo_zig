@@ -4,11 +4,75 @@
 
 #include "rdo_bc_encoder.h"
 #include "utils.h"
+#include <cstdint>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+    bool write(void* user, WriteFn writeFn, uint32_t width, uint32_t height, const void* pBlocks, uint32_t pixel_format_bpp, DXGI_FORMAT dxgi_format, bool srgb, bool force_dx10_header)
+    {
+        (void)srgb;
+
+        if(!writeFn(user, "DDS ", 4)) return false;
+
+        DDSURFACEDESC2 desc;
+        memset(&desc, 0, sizeof(desc));
+
+        desc.dwSize = sizeof(desc);
+        desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS;
+
+        desc.dwWidth = width;
+        desc.dwHeight = height;
+
+        desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+        desc.ddpfPixelFormat.dwSize = sizeof(desc.ddpfPixelFormat);
+
+        desc.ddpfPixelFormat.dwFlags |= DDPF_FOURCC;
+
+        desc.lPitch = (((desc.dwWidth + 3) & ~3) * ((desc.dwHeight + 3) & ~3) * pixel_format_bpp) >> 3;
+        desc.dwFlags |= DDSD_LINEARSIZE;
+
+        desc.ddpfPixelFormat.dwRGBBitCount = 0;
+
+        if ((!force_dx10_header) &&
+            ((dxgi_format == DXGI_FORMAT_BC1_UNORM) ||
+                (dxgi_format == DXGI_FORMAT_BC3_UNORM) ||
+                (dxgi_format == DXGI_FORMAT_BC4_UNORM) ||
+                (dxgi_format == DXGI_FORMAT_BC5_UNORM)))
+        {
+            if (dxgi_format == DXGI_FORMAT_BC1_UNORM)
+                desc.ddpfPixelFormat.dwFourCC = (uint32_t)PIXEL_FMT_FOURCC('D', 'X', 'T', '1');
+            else if (dxgi_format == DXGI_FORMAT_BC3_UNORM)
+                desc.ddpfPixelFormat.dwFourCC = (uint32_t)PIXEL_FMT_FOURCC('D', 'X', 'T', '5');
+            else if (dxgi_format == DXGI_FORMAT_BC4_UNORM)
+                desc.ddpfPixelFormat.dwFourCC = (uint32_t)PIXEL_FMT_FOURCC('A', 'T', 'I', '1');
+            else if (dxgi_format == DXGI_FORMAT_BC5_UNORM)
+                desc.ddpfPixelFormat.dwFourCC = (uint32_t)PIXEL_FMT_FOURCC('A', 'T', 'I', '2');
+
+            if(!writeFn(user, &desc, sizeof(desc))) return false;
+        }
+        else
+        {
+            desc.ddpfPixelFormat.dwFourCC = (uint32_t)PIXEL_FMT_FOURCC('D', 'X', '1', '0');
+
+            if(!writeFn(user, &desc, sizeof(desc))) return false;
+
+            DDS_HEADER_DXT10 hdr10;
+            memset(&hdr10, 0, sizeof(hdr10));
+
+            // Not all tools support DXGI_FORMAT_BC7_UNORM_SRGB (like NVTT), but ddsview in DirectXTex pays attention to it. So not sure what to do here.
+            // For best compatibility just write DXGI_FORMAT_BC7_UNORM.
+            //hdr10.dxgiFormat = srgb ? DXGI_FORMAT_BC7_UNORM_SRGB : DXGI_FORMAT_BC7_UNORM;
+            hdr10.dxgiFormat = dxgi_format; // DXGI_FORMAT_BC7_UNORM;
+            hdr10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
+            hdr10.arraySize = 1;
+
+            if(!writeFn(user, &hdr10, sizeof(hdr10))) return false;
+        }
+
+        return writeFn(user, pBlocks, desc.lPitch);
+    }
 
     void init_bc7enc() {
         bc7enc_compress_block_init();
@@ -70,19 +134,23 @@ extern "C" {
             return { .encoder = nullptr };
         }
 
-        return { .encoder = encoder, };
+        return { .encoder = encoder, .perceptual = parameters.m_perceptual, };
     }
 
     void bc_rdo_deinit(bc_rdo_encoder encoder) {
         delete (rdo_bc::rdo_bc_encoder*)encoder.encoder;
     }
 
-    bool bc_rdo_encode(bc_rdo_encoder encoder) {
+    bool bc_rdo_encode(bc_rdo_encoder encoder, bool force_dx10dds, void* user, WriteFn writeFn) {
         auto enc = (rdo_bc::rdo_bc_encoder*)encoder.encoder;
 
         if(!enc->encode()) {
             return false;
         }
+
+        write(user, writeFn, enc->get_orig_width(), enc->get_orig_height(),
+		enc->get_blocks(), enc->get_pixel_format_bpp(), enc->get_pixel_format(), encoder.perceptual, force_dx10dds);
+
         return true;
     }
 
