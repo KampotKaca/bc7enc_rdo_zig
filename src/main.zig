@@ -1,5 +1,6 @@
 const bc = @import("bc");
 
 pub fn main() !void {
-    bc.init();
+    const encoder = bc.initEncoder(null, null);
+    defer bc.deinitEncoder(encoder);
 }

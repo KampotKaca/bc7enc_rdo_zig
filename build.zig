@@ -37,7 +37,7 @@ pub fn build(b: *std.Build) void {
     module.addIncludePath(b.path("root"));
     module.addCSourceFiles(.{
         .files = &.{
-            "root/bc7enc_c.cpp",
+            "root/rdo_bc.cpp",
             "root/bc7enc.cpp",
             "root/bc7decomp.cpp",
             "root/bc7decomp_ref.cpp",
