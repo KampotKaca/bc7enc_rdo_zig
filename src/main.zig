@@ -8,6 +8,6 @@ pub fn main() !void {
         .buffer = undefined,
     };
 
-    _ = bc.encode(encoder, false, &writer);
+    _ = try bc.encode(encoder, false, &writer);
     defer bc.deinitEncoder(encoder);
 }

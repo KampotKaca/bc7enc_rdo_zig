@@ -11,8 +11,13 @@ pub const deinitEncoder = c.bc_rdo_deinit;
 pub const getDefaultOptions = c.bc_rdo_get_default_options;
 pub const is_ok = c.is_ok;
 
-pub fn encode(encoder: c.bc_rdo_encoder, force_dx10dds: bool, writer: *std.Io.Writer) bool {
-    return c.bc_rdo_encode(encoder, force_dx10dds, writer, writeToWriter);
+pub fn encode(encoder: c.bc_rdo_encoder, force_dx10dds: bool, writer: *std.Io.Writer) !usize {
+    var data: WriterData = .{
+        .writer = writer,
+    };
+    if (!c.bc_rdo_encode(encoder, force_dx10dds, &data, writeToWriter)) return error.failed_to_encode;
+
+    return data.outputSize;
 }
 
 fn writeToWriter(
@@ -20,13 +25,18 @@ fn writeToWriter(
     data: ?*const anyopaque,
     size: u64,
 ) callconv(.c) bool {
-    const writer: *std.Io.Writer = @ptrCast(@alignCast(user));
+    const writer: *WriterData = @ptrCast(@alignCast(user));
     const bytes: [*]const u8 = @ptrCast(data);
     const slice = bytes[0..@intCast(size)];
 
-    _ = writer.write(slice) catch {
+    writer.outputSize += writer.writer.write(slice) catch {
         return false;
     };
 
     return true;
 }
+
+const WriterData = struct {
+    writer: *std.Io.Writer,
+    outputSize: usize = 0,
+};
